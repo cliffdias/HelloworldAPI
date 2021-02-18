@@ -1,0 +1,57 @@
+openapi: 3.0.3
+
+info:
+  title: Helloworld API
+  description: API defining the operations available in the Helloworld API
+  version: 0.1.0
+servers:
+  - url: "https://helloapi.apptocracy.com/v1"
+    description: Production API endpoint for the Hello World API
+
+components:
+  schemas:
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      name: x-api-key
+      in: header
+paths:
+  /hello/{name}:
+    get:
+      operationId: sayHello
+      description: say hello
+      security:
+        - ApiKeyAuth: []
+
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: name of the individual to say hello to
+          schema:
+            type: string
+      x-amazon-apigateway-integration:
+        uri: "arn:aws:apigateway:${aws_region}:lambda:path/2015-03-31/functions/${get_lambda_arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        timeoutInMillis: ${lambda_identity_timeout}
+        type: "aws_proxy"
+        contentHandling: "CONVERT_TO_TEXT"
+      x-amazon-apigateway-auth:
+        type: "NONE"
+      x-amazon-apigateway-api-key-source: "HEADER"
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+security:
+  - ApiKeyAuth: []
